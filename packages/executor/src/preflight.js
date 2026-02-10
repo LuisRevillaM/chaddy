@@ -14,14 +14,21 @@ import { isGeoAllowed } from "./geoblock.js";
  *
  * @param {{
  *  policy: import("./policy.js").Policy
+ *  geoChecker?: { isAllowed: () => (Promise<{allowed:boolean}>|{allowed:boolean}) }
  * }} params
- * @returns {{ ok: boolean, reasons: LivePreflightReason[] }}
+ * @returns {Promise<{ ok: boolean, reasons: LivePreflightReason[] }>}
  */
-export function preflightLiveMode(params) {
+export async function preflightLiveMode(params) {
   /** @type {LivePreflightReason[]} */
   const reasons = [];
 
-  if (!isGeoAllowed()) reasons.push("geoblocked");
+  if (params.geoChecker) {
+    const r = await params.geoChecker.isAllowed();
+    if (!r.allowed) reasons.push("geoblocked");
+  } else {
+    // Offline-proof default: env stub.
+    if (!isGeoAllowed()) reasons.push("geoblocked");
+  }
 
   const p = params.policy;
   if (!Array.isArray(p.allowedMarkets) || p.allowedMarkets.length === 0) reasons.push("missing_allowlist");
@@ -34,4 +41,3 @@ export function preflightLiveMode(params) {
 
   return { ok: reasons.length === 0, reasons };
 }
-

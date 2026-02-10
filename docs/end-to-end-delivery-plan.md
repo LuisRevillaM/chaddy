@@ -108,7 +108,7 @@ Deliverable shape:
 
 - an “Operator Bundle” zip (or installer) that includes:
   - `Start (Paper).command`
-  - `Start (Live).command` (disabled until tiny-live is implemented)
+  - `Start (Live).command` (only after opt-in integration smoke passes on operator machine)
   - `Stop.command`
   - `Status.command` (prints and writes a single JSON status file)
   - `config.json` (editable, or a tiny interactive setup)
@@ -117,4 +117,3 @@ Deliverable shape:
 Design rule:
 
 - observers (blocked regions) only get read-only status; no remote “trade” controls.
-

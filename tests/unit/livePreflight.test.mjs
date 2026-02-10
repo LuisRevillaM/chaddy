@@ -60,7 +60,7 @@ test("preflightLiveMode: refuses deterministically with stable reason codes", as
     for (const c of cases) {
       if ("GEO_ALLOWED" in c.env) process.env.GEO_ALLOWED = c.env.GEO_ALLOWED;
       else delete process.env.GEO_ALLOWED;
-      const r = preflightLiveMode({ policy: c.policy });
+      const r = await preflightLiveMode({ policy: c.policy });
       assert.deepEqual(r, c.expect, c.name);
       results.push({ name: c.name, env: c.env, result: r });
     }
@@ -79,4 +79,3 @@ test("preflightLiveMode: refuses deterministically with stable reason codes", as
     else process.env.GEO_ALLOWED = prevGeo;
   }
 });
-

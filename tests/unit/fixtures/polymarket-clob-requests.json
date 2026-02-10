@@ -1,0 +1,41 @@
+{
+  "baseUrl": "https://clob.polymarket.com",
+  "authHeaders": {
+    "x-api-key": "k",
+    "x-api-passphrase": "p"
+  },
+  "calls": [
+    {
+      "url": "https://clob.polymarket.com/orders",
+      "method": "POST",
+      "headers": {
+        "accept": "application/json",
+        "x-api-key": "k",
+        "x-api-passphrase": "p",
+        "content-type": "application/json"
+      },
+      "body": "{\"token_id\":\"tok_1\",\"side\":\"BUY\",\"price\":0.5,\"size\":1}"
+    },
+    {
+      "url": "https://clob.polymarket.com/orders/order_1",
+      "method": "DELETE",
+      "headers": {
+        "accept": "application/json",
+        "x-api-key": "k",
+        "x-api-passphrase": "p"
+      },
+      "body": null
+    },
+    {
+      "url": "https://clob.polymarket.com/orders",
+      "method": "DELETE",
+      "headers": {
+        "accept": "application/json",
+        "x-api-key": "k",
+        "x-api-passphrase": "p"
+      },
+      "body": null
+    }
+  ]
+}
+

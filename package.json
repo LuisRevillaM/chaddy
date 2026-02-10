@@ -14,6 +14,7 @@
     "replay": "node scripts/prove.mjs --suite replay",
     "sim": "node scripts/prove.mjs --suite sim",
     "soak": "PROVE_SLOW=1 node scripts/prove.mjs --suite soak",
+    "integration": "node scripts/prove.mjs --suite integration",
     "security": "node scripts/prove.mjs --suite security"
   }
 }

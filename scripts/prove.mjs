@@ -145,6 +145,7 @@ async function main() {
   const slow = args.slow || process.env.PROVE_SLOW === "1";
   const OFFLINE_SUITES = new Set(["unit", "replay", "sim", "soak"]);
 
+  // `integration` is intentionally opt-in and network-enabled; keep it out of defaults.
   const defaultSuites = ["unit", "replay", "sim", "security"];
   const suites = args.suites?.length ? args.suites : defaultSuites;
   const expandedSuites = slow ? Array.from(new Set([...suites, "soak"])) : suites;

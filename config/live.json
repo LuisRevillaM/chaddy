@@ -1,0 +1,25 @@
+{
+  "runMode": "live",
+  "markets": ["CHANGE_ME_TOKEN_ID_1"],
+  "quote": {
+    "tickSize": 0.001,
+    "halfSpread": 0.01,
+    "maxSpread": 0.05,
+    "minSize": 1,
+    "orderSize": 1,
+    "inventoryTarget": 10,
+    "maxSkew": 0.01
+  },
+  "killSwitch": {
+    "staleMarketDataMs": 5000,
+    "staleUserDataMs": 60000
+  },
+  "executorPolicy": {
+    "allowedMarkets": ["CHANGE_ME_TOKEN_ID_1"],
+    "minOrderSize": 1,
+    "maxOrderSize": 2,
+    "maxAbsNotional": 5,
+    "maxPriceBand": 0.05
+  }
+}
+

@@ -10,6 +10,7 @@ import { computeDesiredQuotes } from "../strategy/computeDesiredQuotes.js";
 import { diffOrders } from "../orderManager/diffOrders.js";
 import { OrderTracker } from "../state/orderTracker.js";
 import { PositionTracker } from "../state/positionTracker.js";
+import { EconomicsLedger } from "../state/economicsLedger.js";
 
 /**
  * @typedef {{
@@ -66,6 +67,7 @@ export function runMmCoreLoop(cfg, deps) {
   const ob = new ResyncingOrderbook({ tickSize: cfg.quoteCfg.tickSize });
   const orderTracker = new OrderTracker();
   const positionTracker = new PositionTracker();
+  const econ = new EconomicsLedger({ maxFills: 50 });
 
   let nowMs = 0;
   /** @type {number|null} */
@@ -105,6 +107,7 @@ export function runMmCoreLoop(cfg, deps) {
     lastUserDataMs = nowMs;
     orderTracker.applyUserEvent(msg);
     positionTracker.applyUserEvent(msg);
+    econ.applyUserEvent(msg);
   };
 
   const unsubMarket = deps.onMarket(onMarket);
@@ -253,6 +256,8 @@ export function runMmCoreLoop(cfg, deps) {
       scoringSummary.byStep.push({ i, nowMs, buy: buyScore, sell: sellScore });
 
       if (trace.length < traceMax) {
+        const mid = deps.midpointRef ? deps.midpointRef.value : bb && ba ? (bb.price + ba.price) / 2 : null;
+        const pnl = mid == null ? null : econ.pnlMarkToMid(mid);
         trace.push({
           i,
           nowMs,
@@ -261,6 +266,7 @@ export function runMmCoreLoop(cfg, deps) {
           bestAsk: ba,
           inventory: inv,
           liveOrders: liveOrders.length,
+          economics: { cash: econ.cash, position: econ.position, pnlMarkToMid: pnl, fillCount: econ.fillCount },
           killSwitch: ks,
           canceled,
           placed,
@@ -279,7 +285,8 @@ export function runMmCoreLoop(cfg, deps) {
     trace,
     stateFinal: {
       ...positionTracker.toJSON(),
-      liveOrders: orderTracker.liveOrders()
+      liveOrders: orderTracker.liveOrders(),
+      economics: econ.toJSON()
     },
     final: {
       cancelAllTriggered,

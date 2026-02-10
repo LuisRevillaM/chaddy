@@ -12,7 +12,7 @@ Target operator experience (end state):
 - double-click `Start (Paper)` or `Start (Live)`
 - if something breaks, send back a single status file
 
-Today, the repo is still CLI-first. The next milestones will add an "operator bundle" with clickable `.command` scripts.
+This repo is still CLI-first, but the operator bundle now lives under `operator/` and includes clickable `.command` scripts.
 
 ## 0) Preconditions
 
@@ -84,11 +84,29 @@ If `books===0`, inspect:
 
 ## 4) Secrets / Trading
 
-Real trading is intentionally **not enabled** yet in this scaffold:
+This repo now includes a **tiny-live** trading runner (`scripts/run-live.mjs`), but it is still:
+
+- operator-only (must not be run from blocked locations)
+- safe-by-default (requires explicit allowlist + caps + price band)
+- unproven on a real account until you run the opt-in integration suite
+
+Do not add secrets to the repo and do not paste secrets into chat logs.
+
+Rules:
 
 - do not add secrets to the repo
 - do not attempt to wire signing keys into `mm-core`
 - when live trading is implemented, secrets must live only under `packages/executor/` at runtime
+
+### Live-Mode Runtime Secrets (Operator Only)
+
+The live runner and integration suite require runtime-only credentials via environment variables:
+
+- `POLY_CLOB_AUTH_HEADERS_JSON`: JSON object of HTTP auth headers for Polymarket CLOB REST calls.
+  - Example shape (keys are placeholders): `{"x-api-key":"...","x-api-passphrase":"...","x-api-secret":"..."}`
+- `POLY_USER_WS_SUBSCRIBE_JSON` (optional but strongly recommended): JSON payload to subscribe to your user WebSocket channel so the bot can track your orders/fills.
+
+If these are missing, `scripts/run-live.mjs` will refuse to start (or will be unable to track user state).
 
 ## 6) Funding / Live Readiness (Future Step)
 
@@ -105,3 +123,46 @@ For long-running shadow-live, use `nohup` or `systemd` and ensure the operator c
 - restart on crash
 - check `artifacts/shadow-live/latest.json`
 - rotate logs (do not log secrets)
+
+## 7) Send Back A Single Debug Summary (Run Journal)
+
+If you are running `paper-live` or `live`, you can write an append-only JSONL run journal and then generate a single compact summary JSON for debugging.
+
+1) Run with a journal file:
+
+```bash
+node scripts/run-paper-live.mjs --mode fixture --journal artifacts/run.journal.jsonl --out artifacts/paper-live/latest.json
+```
+
+Live runner:
+
+```bash
+node scripts/run-live.mjs --config <path> --journal artifacts/run.journal.jsonl --out artifacts/live/latest.json
+```
+
+2) Generate a single summary file and send it back:
+
+```bash
+node scripts/analyze-run.mjs --journal artifacts/run.journal.jsonl --out artifacts/run-summary.json
+```
+
+Send back only `artifacts/run-summary.json` unless asked for more.
+
+## 8) Opt-In Integration Checks (Operator Machine Only)
+
+The integration suite is network-enabled and **opt-in**. Run it only from the operator machine after confirming geoblock is allowed.
+
+```bash
+INTEGRATION_ENABLED=1 npm run integration
+```
+
+If you want the live smoke to actually place/cancel an order (tiny), you must provide:
+
+- `POLY_CLOB_AUTH_HEADERS_JSON`
+- `POLY_CLOB_TOKEN_ID` (a real token/asset id)
+- optional: `POLY_CLOB_PRICE`, `POLY_CLOB_SIZE`, `POLY_CLOB_SIDE`
+
+If any integration check fails, send back:
+
+- `artifacts/proofs/latest/logs/integration.log`
+- `artifacts/proofs/latest/suite/integration/*.json`
