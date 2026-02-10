@@ -1,0 +1,53 @@
+{
+  "version": 5,
+  "goals": [
+    {
+      "id": "G13",
+      "milestone": "FEED",
+      "title": "Market Channel Deltas in mm-core Loop (Offline Replay Proof)",
+      "objective": "Extend mm-core market ingest to support both orderbook snapshots and incremental price-change deltas, then prove it using sanitized Polymarket market-channel fixtures.",
+      "constraints": [
+        "No network in proof suites (unit/replay/sim/soak). Use fixtures on disk only.",
+        "Must remain deterministic given fixture inputs + config (no Date.now/Math.random).",
+        "Do not relax executor guardrails or geoblock gating."
+      ],
+      "deliverables": [
+        "Update packages/mm-core/src/runner/mmCoreLoop.js onMarket handler to accept {type:\"price_change\", seq, side:\"bid\"|\"ask\", price, size} and apply to the resyncing orderbook.",
+        "Add tests/sim/polymarketMmCoreReplay.test.mjs that replays tests/replay/fixtures/polymarket-market-channel.jsonl into mm-core and asserts top-of-book updates across snapshot+delta.",
+        "Write artifacts artifacts/proofs/latest/suite/sim/polymarket-mmcore-replay.json and artifacts/proofs/latest/suite/sim/polymarket-mmcore-trace.jsonl."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/polymarket-mmcore-replay.json",
+          "artifacts/proofs/latest/suite/sim/polymarket-mmcore-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G14",
+      "milestone": "SHADOW",
+      "title": "Event-Based Shadow Loop + Polymarket Fixture Replay",
+      "objective": "Add a deterministic, read-only shadow loop that ingests market/user events (same interfaces as mm-core) and outputs stable per-step status snapshots; prove it with sanitized Polymarket fixtures.",
+      "constraints": [
+        "Shadow loop must never place/cancel orders.",
+        "No network in proof suites; use fixtures on disk only.",
+        "Status snapshots must be stable and compact; include orderbook top-of-book, inventory, live orders, kill-switch, and desired quotes."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/runner/shadowLoop.js implementing runShadowLoop(cfg,deps) using onMarket/onUser/stepMarket injections.",
+        "Add tests/sim/polymarketShadowLoopReplay.test.mjs replaying both market + user fixtures and asserting quote skew after inventory changes.",
+        "Write artifact artifacts/proofs/latest/suite/sim/polymarket-shadow-status.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/polymarket-shadow-status.json"
+        ]
+      }
+    }
+  ]
+}
+

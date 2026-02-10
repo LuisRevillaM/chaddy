@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "goals": [
+    {
+      "id": "G4",
+      "milestone": "M6",
+      "title": "Rewards Scoring Verifier (Mock + Sim Proof)",
+      "objective": "Introduce an explicit rewards scoring verifier with a deterministic mock implementation and prove that the bot can detect scoring/non-scoring orders and surface it via artifacts.",
+      "constraints": [
+        "All proof suites remain offline by default (unit/replay/sim/soak must not use network).",
+        "Scoring verifier must be injectable: mock in proofs, real implementation gated for live only.",
+        "Scoring status must be observable: write a compact artifact that summarizes scoring outcomes per step/side."
+      ],
+      "deliverables": [
+        "Add scoring checker interface + deterministic mock under packages/mm-core (e.g., packages/mm-core/src/scoring/*).",
+        "Update the deterministic sim quoting loop test to call the scoring checker after placing orders and record scoring results.",
+        "Write a new sim artifact: artifacts/proofs/latest/suite/sim/scoring-summary.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/scoring-summary.json",
+          "artifacts/proofs/latest/suite/sim/sim-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G5",
+      "milestone": "M7",
+      "title": "Shadow Runner (Offline Sim Mode + Status Snapshot)",
+      "objective": "Create a runnable 'shadow mode' loop that can run against SimExchange (offline) and writes periodic status snapshots that an agent can inspect.",
+      "constraints": [
+        "Shadow mode must never place real orders; it must use SimExchange in proofs.",
+        "Status snapshots must be stable JSON with explicit fields (market, midpoint, quotes, live orders, inventory, last data ages, kill-switch state).",
+        "Runner must be deterministic when provided seed + config."
+      ],
+      "deliverables": [
+        "Add a minimal runner module in packages/mm-core (e.g., packages/mm-core/src/runner/shadowRunner.js) that can execute N steps against an injected exchange and write a status snapshot.",
+        "Add a small CLI wrapper script (optional) that invokes the runner with config + seed.",
+        "Add a sim or unit test that runs the runner and writes a snapshot artifact."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/shadow-status.json"
+        ]
+      }
+    },
+    {
+      "id": "G6",
+      "milestone": "M8",
+      "title": "Live-Mode Preflight Safety Gates (Proof of Refusal)",
+      "objective": "Add explicit preflight checks that make live mode impossible to start unless safety requirements are satisfied, and prove refusals are enforced deterministically.",
+      "constraints": [
+        "Live mode must refuse to start when geoblocked (GEO_ALLOWED != 1).",
+        "Live mode must refuse to start without an explicit allowlist and caps.",
+        "Preflight must never log secrets; security scan must pass."
+      ],
+      "deliverables": [
+        "Add a preflight module (packages/mm-core or packages/executor) that validates required env/config for live mode and returns stable reason codes.",
+        "Add unit tests covering each refusal reason and one success case (success case may still be simulated).",
+        "Write a unit artifact under artifacts/proofs/latest/suite/unit/live-preflight.json summarizing checks and results."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/unit/live-preflight.json"
+        ]
+      }
+    }
+  ]
+}
+

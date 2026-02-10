@@ -1,0 +1,29 @@
+{
+  "version": 7,
+  "goals": [
+    {
+      "id": "G16",
+      "milestone": "SHADOWLIVE",
+      "title": "Shadow-Live Runner (Fixture-Proven) + Live WebSocket Mode",
+      "objective": "Create a shadow-live runner that can be proven offline using fixtures, while also supporting a real Polymarket market WebSocket mode (not run in offline proofs).",
+      "constraints": [
+        "Offline proof suites must remain offline by default (no fetch/WebSocket).",
+        "Shadow-live runner must never place/cancel orders (read-only).",
+        "Status output must be stable JSON with top-of-book, inventory, live orders, kill-switch, and desired quotes."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/runner/shadowEngine.js (pure) to maintain orderbook + trackers and compute status snapshots.",
+        "Add scripts/run-shadow-live.mjs supporting: --mode fixture (offline) and --mode live (WebSocket).",
+        "Add tests/sim/shadowLiveCli.test.mjs that runs the CLI in fixture mode and writes artifacts/proofs/latest/suite/sim/shadow-live-cli.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/shadow-live-cli.json"
+        ]
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,79 @@
+{
+  "version": 3,
+  "goals": [
+    {
+      "id": "G7",
+      "milestone": "CORE",
+      "title": "Extract The Quoting Loop Into mm-core (Reusable Runner)",
+      "objective": "Move the deterministic quoting loop out of tests into a reusable mm-core runner module so the system is an actual program, not just a test script.",
+      "constraints": [
+        "Runner must be deterministic when driven by injected time + injected deps (no hidden timers).",
+        "Runner must not require network access for proof suites; tests must continue to run offline.",
+        "Runner must not import executor implementation details (keep boundaries)."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/runner/mmCoreLoop.js (or similar) that runs a bounded number of steps and returns: churn summary, scoring summary, and a trace (all JSON-serializable).",
+        "Update tests/sim/simExchange.test.mjs to call the new runner (reduce duplicated orchestration logic).",
+        "Write artifacts from the runner (or test) into PROVE_OUT_DIR: churn-summary.json, scoring-summary.json, sim-trace.jsonl."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/churn-summary.json",
+          "artifacts/proofs/latest/suite/sim/scoring-summary.json",
+          "artifacts/proofs/latest/suite/sim/sim-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G8",
+      "milestone": "STATE",
+      "title": "Order + Position Tracking From User Events (No Exchange Introspection)",
+      "objective": "Stop peeking at SimExchange internal state. Track orders and inventory the way production must: from user events.",
+      "constraints": [
+        "mm-core must not read exchange internal structures like ex.orders or ex.position (except inside sim-only code).",
+        "Trackers must be deterministic and fully testable with unit tests.",
+        "Trackers must handle duplicate events safely (idempotence) or fail loudly with invariants."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/state/orderTracker.js and packages/mm-core/src/state/positionTracker.js (or similar).",
+        "Update the deterministic sim test/runner to derive liveOrders + inventory from trackers fed by ex.on('user', ...), not from SimExchange internals.",
+        "Add unit tests proving tracker behavior across order_open, fill, order_canceled, order_closed.",
+        "Write a sim artifact: artifacts/proofs/latest/suite/sim/state-tracker-final.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/state-tracker-final.json"
+        ]
+      }
+    },
+    {
+      "id": "G9",
+      "milestone": "PROTO",
+      "title": "Polymarket WS Message Fixtures + Parsers (Offline Contract Proof)",
+      "objective": "Create an offline contract test bed for real Polymarket integration: fixtures of actual WS messages + parsers that map them to internal events.",
+      "constraints": [
+        "Fixtures must be sourced from official Polymarket docs or real observed messages; do not invent arbitrary shapes.",
+        "Proof suites stay offline: replay tests must use fixtures on disk, not live endpoints.",
+        "Parsers must be total: they either return a valid internal event or return a structured parse error (no silent drops)."
+      ],
+      "deliverables": [
+        "Add fixtures under tests/replay/fixtures/polymarket-market-channel.jsonl and tests/replay/fixtures/polymarket-user-channel.jsonl (sanitized, no secrets).",
+        "Add pure parsers in packages/mm-core/src/polymarket/ (or packages/shared if preferred) that convert fixture lines into internal snapshot/delta/user events.",
+        "Add a new replay test that reads the JSONL fixtures, parses them, feeds ResyncingOrderbook + trackers, and writes artifacts: polymarket-replay-trace.jsonl and polymarket-final.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite replay,unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/replay/polymarket-replay-trace.jsonl",
+          "artifacts/proofs/latest/suite/replay/polymarket-final.json"
+        ]
+      }
+    }
+  ]
+}
+

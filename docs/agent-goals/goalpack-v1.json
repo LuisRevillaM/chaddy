@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "goals": [
+    {
+      "id": "G1",
+      "milestone": "M2",
+      "title": "Orderbook Resync + Fixture-Based Replay Harness",
+      "objective": "Add resync-aware orderbook processing and make replay tests load from fixtures, producing useful trace artifacts.",
+      "constraints": [
+        "Proof suites must remain offline by default (no network calls in unit/replay/sim/soak).",
+        "Do not weaken sequence-gap detection; gaps must be detected and handled explicitly (resync).",
+        "Keep artifacts small and deterministic."
+      ],
+      "deliverables": [
+        "Add a resync-aware wrapper/controller in packages/mm-core (e.g., ResyncingOrderbook) that can: apply snapshot, apply delta, detect gap, enter resync mode, and recover on next snapshot.",
+        "Add replay fixtures under tests/replay/fixtures/*.json (at least one fixture that contains a deliberate seq gap followed by a resync snapshot).",
+        "Update replay tests to read fixtures from disk and write a trace artifact (JSONL) to artifacts/proofs/latest/suite/replay/."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,replay,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/replay/orderbook-final.json",
+          "artifacts/proofs/latest/suite/replay/replay-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G2",
+      "milestone": "M4",
+      "title": "Quoting Loop + Anti-Churn Controls (Deterministic Sim Proof)",
+      "objective": "Create a minimal deterministic quoting loop in tests that exercises strategy + diffing + executor and proves bounded churn and kill-switch behavior.",
+      "constraints": [
+        "Do not put keys/creds in mm-core; only executor can trade (boundary enforced).",
+        "Anti-churn must be explicit: min update interval and a token-bucket (or equivalent) call budget.",
+        "Kill switch must cancel-all on stale market data (prove it in sim)."
+      ],
+      "deliverables": [
+        "Add anti-churn policy module(s) in packages/mm-core (e.g., TokenBucket + UpdateThrottle).",
+        "Add a deterministic sim test that runs N steps, maintains orderbook state, computes desired quotes, diffs orders, and applies actions through executor.",
+        "Emit sim artifacts: churn summary + trace (JSON/JSONL)."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/churn-summary.json",
+          "artifacts/proofs/latest/suite/sim/sim-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G3",
+      "milestone": "M5",
+      "title": "Executor Guardrail Exhaustiveness (Rejection Reasons + Proofs)",
+      "objective": "Make executor guardrails and geoblock gating provable and exhaustive with tests and artifacts.",
+      "constraints": [
+        "Geoblock must always be enforced before trading actions (place/cancel/cancel-all).",
+        "Policy rejections must be explicit and stable (reason codes).",
+        "No secrets in logs (security scan must pass)."
+      ],
+      "deliverables": [
+        "Expand executor policy validation tests to cover every rejection reason (market_not_allowed, size_out_of_bounds, notional_cap_exceeded, price_out_of_band, geoblocked).",
+        "Emit a small artifact from sim or unit suite summarizing policy rejection counts by reason."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/policy-rejections.json"
+        ]
+      }
+    }
+  ]
+}
+

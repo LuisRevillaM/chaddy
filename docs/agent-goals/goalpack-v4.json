@@ -1,0 +1,76 @@
+{
+  "version": 4,
+  "goals": [
+    {
+      "id": "G10",
+      "milestone": "SELECT",
+      "title": "Market Discovery + Selection (Offline Gamma Fixtures)",
+      "objective": "Add an offline, deterministic market discovery + selection module (control plane) that ranks markets using Gamma-like fixtures and outputs a stable selection artifact.",
+      "constraints": [
+        "No network in proof suites (unit/replay/sim/soak). Use fixtures on disk only.",
+        "Selection must be deterministic given input JSON and config (no Date.now, no Math.random).",
+        "Selection must be explainable: output must include per-market scoring breakdown, not just IDs."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/selection/selectMarkets.js (pure) that takes an array of market metadata and returns a ranked list with reasons.",
+        "Add a fixture under tests/unit/fixtures/gamma-markets.json (sanitized, small) and a unit test that loads it and asserts expected ranking.",
+        "Write artifact artifacts/proofs/latest/suite/unit/market-selection.json containing: inputs summary, ranked outputs, and scoring breakdown."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/unit/market-selection.json"
+        ]
+      }
+    },
+    {
+      "id": "G11",
+      "milestone": "MULTI",
+      "title": "Multi-Market Sim Orchestrator (Scale Without Refactors)",
+      "objective": "Run multiple independent mm-core loops (one per market) in a single deterministic sim proof to validate horizontal scaling assumptions and produce aggregated observability artifacts.",
+      "constraints": [
+        "Do not refactor core single-market logic unless necessary; orchestrate multiple runMmCoreLoop calls.",
+        "Each market must have isolated state (orderbook, trackers, throttles, token buckets).",
+        "Aggregated artifact must be stable and compact."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/runner/multiMarketOrchestrator.js that runs N markets using SimExchange + Executor instances per market and returns per-market summaries.",
+        "Add a sim test that runs 2-3 markets with different seeds/configs and asserts: each market triggers its own kill-switch independently and does not leak orders/position across markets.",
+        "Write artifacts: artifacts/proofs/latest/suite/sim/multi-market-summary.json and artifacts/proofs/latest/suite/sim/multi-market-trace.jsonl."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/multi-market-summary.json",
+          "artifacts/proofs/latest/suite/sim/multi-market-trace.jsonl"
+        ]
+      }
+    },
+    {
+      "id": "G12",
+      "milestone": "LIFECYCLE",
+      "title": "Market Lifecycle: Enter/Exit With Cancel-All + State Reset Proof",
+      "objective": "Prove the system can safely stop quoting a market, cancel all orders, reset state, and start quoting a new market without residual state.",
+      "constraints": [
+        "Exit must always cancel-all via executor (and be observable in artifacts).",
+        "State reset must clear orderbook + trackers + throttles/buckets for the old market.",
+        "The lifecycle must be deterministic and proven in sim."
+      ],
+      "deliverables": [
+        "Add a lifecycle runner (packages/mm-core/src/runner/marketLifecycle.js) that: run market A for X steps, exit (cancel-all), reset, run market B for Y steps.",
+        "Add a sim test that asserts: after exit, live orders are zero and trackers are reset; market B starts from a clean slate.",
+        "Write artifact: artifacts/proofs/latest/suite/sim/market-lifecycle.json capturing phase transitions and final state per phase."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/market-lifecycle.json"
+        ]
+      }
+    }
+  ]
+}
+

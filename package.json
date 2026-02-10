@@ -1,0 +1,19 @@
+{
+  "name": "bot",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prove": "node scripts/prove.mjs",
+    "goal": "node scripts/run-goal.mjs",
+    "goals": "node scripts/list-goals.mjs",
+    "test": "node --test",
+    "unit": "node scripts/prove.mjs --suite unit",
+    "replay": "node scripts/prove.mjs --suite replay",
+    "sim": "node scripts/prove.mjs --suite sim",
+    "soak": "PROVE_SLOW=1 node scripts/prove.mjs --suite soak",
+    "security": "node scripts/prove.mjs --suite security"
+  }
+}

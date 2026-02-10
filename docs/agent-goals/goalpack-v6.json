@@ -1,0 +1,29 @@
+{
+  "version": 6,
+  "goals": [
+    {
+      "id": "G15",
+      "milestone": "RESYNC",
+      "title": "Cancel-All On Orderbook Resync Gap (Safety Proof)",
+      "objective": "Ensure the hot-path mm-core loop never continues quoting on an orderbook with a sequence gap: a resync-gap must trigger cancel-all and suppress further quoting until a new snapshot arrives.",
+      "constraints": [
+        "No network in proof suites (unit/replay/sim/soak).",
+        "Behavior must be deterministic under the sim harness.",
+        "Do not weaken executor guardrails or geoblock gating."
+      ],
+      "deliverables": [
+        "Update packages/mm-core/src/runner/mmCoreLoop.js to: (1) suppress quoting while ob.needsResync is true, and (2) treat an observed gap (ob.lastGap set) as a kill-switch reason 'orderbook_resync_gap' that triggers executor.cancelAll().",
+        "Add tests/sim/orderbookResyncGapKillSwitch.test.mjs proving a seq gap triggers cancel-all and results in zero live orders.",
+        "Write artifact artifacts/proofs/latest/suite/sim/orderbook-resync-gap-killswitch.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/orderbook-resync-gap-killswitch.json"
+        ]
+      }
+    }
+  ]
+}
+

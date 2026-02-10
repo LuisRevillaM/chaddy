@@ -1,0 +1,47 @@
+{
+  "source": "gamma-like-fixture",
+  "notes": "Sanitized, offline fixture. Values are small and deterministic; no real IDs or secrets.",
+  "markets": [
+    {
+      "id": "mkt_alpha",
+      "question": "Will alpha happen?",
+      "active": true,
+      "closed": false,
+      "liquidityUsd": 20000,
+      "volume24hUsd": 50000,
+      "rewardPoolUsd": 1000,
+      "spreadBps": 30
+    },
+    {
+      "id": "mkt_bravo",
+      "question": "Will bravo happen?",
+      "active": true,
+      "closed": false,
+      "liquidityUsd": 15000,
+      "volume24hUsd": 100000,
+      "rewardPoolUsd": 900,
+      "spreadBps": 25
+    },
+    {
+      "id": "mkt_charlie",
+      "question": "Will charlie happen?",
+      "active": true,
+      "closed": false,
+      "liquidityUsd": 5000,
+      "volume24hUsd": 10000,
+      "rewardPoolUsd": 2000,
+      "spreadBps": 200
+    },
+    {
+      "id": "mkt_inactive",
+      "question": "An inactive market (should rank last)",
+      "active": false,
+      "closed": false,
+      "liquidityUsd": 1000,
+      "volume24hUsd": 1000,
+      "rewardPoolUsd": 100,
+      "spreadBps": 50
+    }
+  ]
+}
+

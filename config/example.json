@@ -1,0 +1,25 @@
+{
+  "runMode": "shadow",
+  "markets": ["mkt_1"],
+  "quote": {
+    "tickSize": 0.01,
+    "halfSpread": 0.02,
+    "maxSpread": 0.1,
+    "minSize": 1,
+    "orderSize": 5,
+    "inventoryTarget": 100,
+    "maxSkew": 0.02
+  },
+  "killSwitch": {
+    "staleMarketDataMs": 5000,
+    "staleUserDataMs": 10000
+  },
+  "executorPolicy": {
+    "allowedMarkets": ["mkt_1"],
+    "minOrderSize": 1,
+    "maxOrderSize": 50,
+    "maxAbsNotional": 100,
+    "maxPriceBand": 0.2
+  }
+}
+
