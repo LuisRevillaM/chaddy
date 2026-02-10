@@ -39,7 +39,9 @@ async function main() {
       path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v4.json"),
       path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v5.json"),
       path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v6.json"),
-      path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v7.json")
+      path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v7.json"),
+      path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v8.json"),
+      path.join(REPO_ROOT, "docs", "agent-goals", "goalpack-v9.json")
     ];
 
   /** @type {Array<{pack:string, id:string, milestone:string, title:string, proof:string}>} */

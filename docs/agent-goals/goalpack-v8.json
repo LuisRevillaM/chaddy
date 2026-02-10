@@ -1,0 +1,80 @@
+{
+  "version": 8,
+  "goals": [
+    {
+      "id": "G17",
+      "milestone": "PAPERLIVE",
+      "title": "Paper-Live Runner (Fixture-Proven) + Live Market-Data Mode (No Real Trading)",
+      "objective": "Create a \"paper-live\" runner that consumes market data (fixtures in proofs; real WS/Gamma in live mode) and runs the full mm-core quoting + order-manager loop against a non-networked executor (SimExchange), producing stable observability artifacts without ever touching Polymarket trading endpoints.",
+      "constraints": [
+        "Proof suites must remain offline by default (unit/replay/sim/soak).",
+        "Paper-live must never place/cancel orders on Polymarket; it may only use market-data endpoints (Gamma + market WebSocket).",
+        "No secrets in repo; security scan must pass.",
+        "Do not weaken executor guardrails or geoblock gating."
+      ],
+      "deliverables": [
+        "Add scripts/run-paper-live.mjs supporting: --mode fixture|live and writing a stable JSON status/result to --out.",
+        "In fixture mode, drive market updates from tests/replay/fixtures/polymarket-market-channel.jsonl and run a bounded mm-core loop using SimExchange+Executor as a deterministic user-event source (no fills).",
+        "In live mode (not run in offline proofs), connect to the Polymarket market WebSocket and feed parsed market events into the paper-live engine; never call trading endpoints.",
+        "Add tests/sim/paperLiveCli.test.mjs that runs the CLI in fixture mode and writes artifacts/proofs/latest/suite/sim/paper-live-cli.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/paper-live-cli.json"
+        ]
+      }
+    },
+    {
+      "id": "G18",
+      "milestone": "OPBUNDLE",
+      "title": "Operator Bundle v0 (Mac .command Wrappers + Self-Check, Fixture-Proven)",
+      "objective": "Add an operator-focused \"bundle\" (shell/.command scripts) that a non-technical Mac operator can run to: self-check prerequisites, start paper-live, and print status. Prove the bundle works offline by executing it in fixture mode under the sim suite.",
+      "constraints": [
+        "Must not require the operator to know Node/Git beyond double-clicking a script.",
+        "Must never embed secrets in the repo or logs.",
+        "Must never place/cancel real orders (paper-live only for v0).",
+        "Must be safe-by-default: if any precondition fails, refuse to run and write a clear reason."
+      ],
+      "deliverables": [
+        "Add operator/selfcheck.command that validates: Node version, repo present, and prints a single JSON status file (no secrets).",
+        "Add operator/start-paper.command that runs scripts/run-paper-live.mjs (fixture mode when PROVE_NO_NETWORK=1; live mode otherwise) and writes/updates artifacts/shadow-live or artifacts/paper-live status JSON.",
+        "Add operator/status.command that prints a short health summary by reading the latest status JSON and exits 0/1 based on health.",
+        "Add tests/sim/operatorBundle.test.mjs that runs selfcheck + start-paper in fixture mode and writes artifacts/proofs/latest/suite/sim/operator-bundle.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/operator-bundle.json"
+        ]
+      }
+    },
+    {
+      "id": "G19",
+      "milestone": "INTEGRATION",
+      "title": "Integration Suite Scaffold (Opt-In Network Tests, Always Writes Artifact)",
+      "objective": "Add an opt-in integration test suite to the proof harness for networked checks (geoblock endpoint, WS connectivity, etc.) that is never run by default, and which always writes a stable artifact explaining whether it was enabled and what was checked.",
+      "constraints": [
+        "Integration suite must not run by default under `npm run prove`.",
+        "Integration tests must do zero network work unless an explicit env flag is set (e.g. INTEGRATION_ENABLED=1).",
+        "When not enabled, integration tests must still pass and must still write a small artifact describing what would have run."
+      ],
+      "deliverables": [
+        "Update scripts/prove.mjs to support running a new suite: integration (network-enabled by default; not included in default suites).",
+        "Add package.json script: integration (runs only that suite).",
+        "Add tests/integration/integrationHarness.test.mjs that always writes artifacts/proofs/latest/suite/integration/integration-harness.json with { enabled: boolean, checks: [...] } and only performs network checks when enabled.",
+        "Update scripts/list-goals.mjs to include goalpack-v8.json in the default pack list."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite integration,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/integration/integration-harness.json"
+        ]
+      }
+    }
+  ]
+}
+

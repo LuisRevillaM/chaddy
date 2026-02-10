@@ -1,0 +1,78 @@
+{
+  "version": 9,
+  "goals": [
+    {
+      "id": "G20",
+      "milestone": "GEO",
+      "title": "Real Geoblock Check (Injectable + Cached) + Preflight Wiring",
+      "objective": "Replace the executor geoblock stub with an injectable geoblock checker that can be mocked in offline proofs and can call the official Polymarket geoblock endpoint in live/integration runs. Wire it into live preflight so trading cannot start when blocked.",
+      "constraints": [
+        "Do not bypass or weaken Polymarket geographic restrictions. The system must refuse to trade when blocked.",
+        "Offline proof suites must remain offline by default (no fetch). Any live geoblock check must be integration-only or gated behind explicit flags.",
+        "Never log secrets or PII; security scan must pass."
+      ],
+      "deliverables": [
+        "Add packages/executor/src/geoblockClient.js exporting createGeoChecker({ fetchImpl, url, cacheMs }) and a method isAllowed() -> { allowed:boolean, details?:{country,region,ip,blocked} }.",
+        "Update packages/executor/src/preflight.js to use the injected checker (defaulting to the existing env stub for offline tests).",
+        "Add unit tests proving caching behavior + refusal when blocked using a mock fetch implementation.",
+        "Add an integration test (skipped unless INTEGRATION_ENABLED=1) that calls the real geoblock endpoint and writes artifacts/proofs/latest/suite/integration/geoblock.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md"
+        ]
+      }
+    },
+    {
+      "id": "G21",
+      "milestone": "EXEC",
+      "title": "Polymarket Executor Adapter (Mock-Proven Request Formation, No Secrets)",
+      "objective": "Implement the real Polymarket CLOB executor adapter (place/cancel/cancel-all) inside packages/executor in a way that can be proven offline by mocking HTTP and proving request formation, policy enforcement, and secret-safety. Real trading is exercised only via opt-in integration runs on an operator machine.",
+      "constraints": [
+        "Keys/credentials must live only inside packages/executor and must never be logged.",
+        "mm-core must not import executor implementation details (security scan must pass).",
+        "No network in offline proof suites; use mock fetch + fixtures for responses.",
+        "Do not weaken policy guardrails."
+      ],
+      "deliverables": [
+        "Add packages/executor/src/polymarket/ClobClient.js (or equivalent) that uses an injected fetchImpl and builds the required REST requests for trading endpoints.",
+        "Add unit tests that: (1) validate correct HTTP method/path/headers/body for each action using golden snapshots, and (2) prove guardrails reject invalid orders before any network call.",
+        "Add security-oriented tests that ensure secrets are not present in error strings / logs (best-effort).",
+        "Add an integration test skeleton (skipped unless enabled) that can execute a tiny \"place then cancel\" against a real operator account and writes artifacts/proofs/latest/suite/integration/live-smoke.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md"
+        ]
+      }
+    },
+    {
+      "id": "G22",
+      "milestone": "LIVE",
+      "title": "Tiny Live Runner (1–3 Markets) + Cancel-All Drill + Operator UX",
+      "objective": "Add a production-oriented live runner that wires: market data ingestion (WS + snapshot bootstrap), user channel ingestion, mm-core loop, and executor adapter with strict preflight gates. Provide an operator-friendly start/stop/status UX and a scripted cancel-all drill.",
+      "constraints": [
+        "Must refuse to start when blocked (geoblock) or when allowlist/caps are missing.",
+        "Must have a deadman switch: stale feed => cancel-all.",
+        "Must never expose keys/creds to any agent/LLM or to the UI/observer.",
+        "Integration runs must be opt-in; offline proofs remain deterministic."
+      ],
+      "deliverables": [
+        "Add scripts/run-live.mjs supporting: --config <path> and writing a stable status JSON (heartbeat + last message ages + kill-switch + policy rejections).",
+        "Add market-data bootstrap: fetch an orderbook snapshot on connect and then apply WS deltas; refuse to quote until snapshot applied.",
+        "Add user-channel ingestion and wire it into trackers (orders + positions).",
+        "Add operator scripts: operator/start-live.command, operator/stop.command, operator/status.command.",
+        "Add an integration cancel-all drill script that can be run safely and writes artifacts/proofs/latest/suite/integration/cancel-all-drill.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md"
+        ]
+      }
+    }
+  ]
+}
+
