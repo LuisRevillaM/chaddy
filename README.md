@@ -26,5 +26,6 @@ npm run prove
 
 - `docs/polymarket-liquidity-rewards-mm.md` (concept + architecture notes)
 - `docs/mm-bot-build-plan.md` (milestones + proof strategy)
+- `docs/end-to-end-delivery-plan.md` (end-to-end delivery plan + operator logistics)
 - `docs/proofs.md` (proof suites + artifacts)
 - `AGENTS.md` (hard constraints for agents)
