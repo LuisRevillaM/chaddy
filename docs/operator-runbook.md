@@ -2,6 +2,18 @@
 
 This runbook is for a trusted operator who will run the bot from a location where Polymarket is **not geoblocked**. Do not attempt to bypass georestrictions.
 
+## Operator Skill Level Assumption
+
+This project is being built so a non-technical operator can run it.
+
+Target operator experience (end state):
+
+- download a zip (or clone once)
+- double-click `Start (Paper)` or `Start (Live)`
+- if something breaks, send back a single status file
+
+Today, the repo is still CLI-first. The next milestones will add an "operator bundle" with clickable `.command` scripts.
+
 ## 0) Preconditions
 
 - Node.js `>=20` (recommended: current LTS)
@@ -78,6 +90,14 @@ Real trading is intentionally **not enabled** yet in this scaffold:
 - do not attempt to wire signing keys into `mm-core`
 - when live trading is implemented, secrets must live only under `packages/executor/` at runtime
 
+## 6) Funding / Live Readiness (Future Step)
+
+When live trading is implemented, the operator will additionally need:
+
+- a compliant Polymarket account they are allowed to operate
+- a funded balance sufficient for tiny-caps testing
+- an explicit allowlist + caps configuration (safe-by-default)
+
 ## 5) Process Management
 
 For long-running shadow-live, use `nohup` or `systemd` and ensure the operator can:
@@ -85,4 +105,3 @@ For long-running shadow-live, use `nohup` or `systemd` and ensure the operator c
 - restart on crash
 - check `artifacts/shadow-live/latest.json`
 - rotate logs (do not log secrets)
-
