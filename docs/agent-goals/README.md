@@ -39,5 +39,6 @@ See:
 - `docs/agent-goals/goalpack-v7.json` (machine-readable)
 - `docs/agent-goals/goalpack-v8.json` (machine-readable)
 - `docs/agent-goals/goalpack-v9.json` (machine-readable)
+- `docs/agent-goals/goalpack-v10.json` (machine-readable)
 - `docs/milestones/` (full milestone docs)
 - `docs/agent-runbook.md` (execution loop)

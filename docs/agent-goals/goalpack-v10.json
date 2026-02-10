@@ -1,0 +1,78 @@
+{
+  "version": 10,
+  "goals": [
+    {
+      "id": "G23",
+      "milestone": "ECON",
+      "title": "Economics Ledger (Fill Cashflows + Mark-to-Mid) + Sim Artifact",
+      "objective": "Add a deterministic economics ledger that consumes user fill events and computes cash, position, and mark-to-mid PnL over time. Prove it in sim and emit a compact economics artifact. This does not claim profitability; it makes profitability measurable.",
+      "constraints": [
+        "Offline proof suites remain offline by default.",
+        "Ledger must be deterministic and bounded in memory (store at most last N fills; N small).",
+        "No secrets in repo; security scan must pass.",
+        "Do not weaken executor guardrails or geoblock gating."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/state/economicsLedger.js driven by user events (fill only) producing: { cash, position, pnlMarkToMid(mid), fillCount }.",
+        "Wire the ledger into the sim proof loop(s) so each step can record mark-to-mid PnL using the loop midpointRef.",
+        "Add tests/unit/economicsLedger.test.mjs with deterministic cashflow expectations.",
+        "Update one sim suite test to write artifacts/proofs/latest/suite/sim/economics-summary.json containing a small time-series (e.g. first/last/percentiles) and final {cash,position,pnl}."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/economics-summary.json"
+        ]
+      }
+    },
+    {
+      "id": "G24",
+      "milestone": "RECON",
+      "title": "Startup Reconciliation Strategy (Safe Start) + Sim Proof",
+      "objective": "Implement and prove a safe startup reconciliation strategy so restarts cannot leave orphan orders or inconsistent state. The baseline strategy is: cancel-all on start, refuse quoting until orderbook snapshot is fresh, then begin quoting.",
+      "constraints": [
+        "Must remain deterministic in sim proofs.",
+        "Must not start quoting until a snapshot has been applied after startup.",
+        "Must not weaken executor guardrails or geoblock gating."
+      ],
+      "deliverables": [
+        "Add a runner/orchestrator module (packages/mm-core/src/runner/startupReconcile.js) that performs: cancel-all once, reset trackers/orderbook, then gates quoting until a snapshot arrives.",
+        "Add a sim proof that starts with pre-existing live orders, runs startup reconcile, and asserts: cancel-all called, liveOrders becomes empty, and quoting does not start until a snapshot is observed.",
+        "Write artifacts/proofs/latest/suite/sim/startup-reconcile.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/startup-reconcile.json"
+        ]
+      }
+    },
+    {
+      "id": "G25",
+      "milestone": "ANALYZE",
+      "title": "Run Journal + Offline Analyzer (Single Summary JSON)",
+      "objective": "Standardize a run journal (JSONL) format for paper-live/live runs and add an offline analyzer that produces a single compact summary JSON (churn, scoring rate, uptime, pnl if available). Prove the analyzer using sim fixtures/artifacts only.",
+      "constraints": [
+        "Analyzer must run offline and must not require network access.",
+        "Journal format must be append-only JSONL and stable across runs.",
+        "No secrets in logs/artifacts; security scan must pass."
+      ],
+      "deliverables": [
+        "Define a journal entry schema in packages/shared/src/runJournalSchema.js (pure; no I/O).",
+        "Add scripts/analyze-run.mjs that reads a journal JSONL file and outputs a deterministic summary JSON.",
+        "Add a sim test that generates a small journal from a deterministic sim run and writes artifacts/proofs/latest/suite/sim/run-summary.json.",
+        "Document how operators send back the single summary file for debugging."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/run-summary.json"
+        ]
+      }
+    }
+  ]
+}
+
