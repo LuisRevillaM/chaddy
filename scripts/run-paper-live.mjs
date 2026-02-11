@@ -5,6 +5,7 @@ import { EventEmitter } from "node:events";
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
 import { Executor } from "../packages/executor/src/Executor.js";
 import { killSwitchDecision } from "../packages/mm-core/src/controls/killSwitch.js";
@@ -130,6 +131,44 @@ async function readJsonlLines(p) {
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
+}
+
+function normalizeSnapshotLevels(x) {
+  /** @type {Array<[number, number]>} */
+  const out = [];
+  if (!Array.isArray(x)) return out;
+  for (const lvl of x) {
+    const p = Array.isArray(lvl) ? Number(lvl[0]) : Number(lvl?.price);
+    const s = Array.isArray(lvl) ? Number(lvl[1]) : Number(lvl?.size);
+    if (!Number.isFinite(p) || !Number.isFinite(s)) continue;
+    if (s <= 0) continue;
+    out.push([p, s]);
+  }
+  return out;
+}
+
+export async function fetchOrderbookSnapshot({ baseUrl, tokenId, fetchImpl = fetch }) {
+  const url = `${String(baseUrl || "").replace(/\/+$/, "")}/book?token_id=${encodeURIComponent(String(tokenId || ""))}`;
+  const res = await fetchImpl(url, { method: "GET", headers: { accept: "application/json" } });
+  if (!res.ok) return { ok: false, status: res.status };
+  const data = await res.json();
+  const bids = normalizeSnapshotLevels(data?.bids ?? data?.buys ?? []);
+  const asks = normalizeSnapshotLevels(data?.asks ?? data?.sells ?? []);
+  if (bids.length === 0 || asks.length === 0) return { ok: false, status: 200 };
+  return { ok: true, bids, asks, url };
+}
+
+export function parseBestBidAskFromDeltaEvent(ev) {
+  const bid = Number(ev?.meta?.best_bid);
+  const ask = Number(ev?.meta?.best_ask);
+  if (!Number.isFinite(bid) || !Number.isFinite(ask)) return null;
+  if (!(bid > 0) || !(ask > 0)) return null;
+  if (bid >= ask) return null;
+  return { bids: [[bid, 1]], asks: [[ask, 1]] };
+}
+
+export function shouldLatchCancelAll(reason) {
+  return String(reason || "") !== "no_market_data_yet";
 }
 
 async function atomicWriteJson(p, obj) {
@@ -444,7 +483,7 @@ class PaperLiveEngine {
       this.churnSummary.cancelAllCanceled += r.canceled;
       this.churnSummary.killSwitch.cancelAllCalls += 1;
       this.churnSummary.killSwitch.lastReason = ks.reason;
-      this.cancelAllTriggered = true;
+      if (shouldLatchCancelAll(ks.reason)) this.cancelAllTriggered = true;
     } else if (!this.cancelAllTriggered && !this.ob.needsResync && bb && ba) {
       desired = computeDesiredQuotes({ bestBid: bb, bestAsk: ba, inventory: inv }, this.quoteCfg);
 
@@ -613,6 +652,15 @@ async function runLiveMode(opts) {
   ex.on("user", (msg) => engine.ingestUser(nowMs(), msg));
 
   let seq = 0;
+  const bootstrap = {
+    attempted: false,
+    ok: false,
+    source: null,
+    status: null,
+    bids: 0,
+    asks: 0,
+    url: null
+  };
 
   const wsStats = {
     connectAttempts: 0,
@@ -624,6 +672,7 @@ async function runLiveMode(opts) {
     parsedErrorCount: 0,
     bookEventCount: 0,
     deltaEventCount: 0,
+    syntheticBookFromDeltaCount: 0,
     ignoredMessageCount: 0,
     subscribeAttempts: 0,
     lastOpenAtMs: null,
@@ -643,6 +692,30 @@ async function runLiveMode(opts) {
     lastBookAtMs: null,
     lastDeltaAtMs: null
   };
+
+  // Best-effort startup bootstrap to avoid waiting for a websocket snapshot shape that may never arrive.
+  bootstrap.attempted = true;
+  try {
+    const snap = await fetchOrderbookSnapshot({ baseUrl: "https://clob.polymarket.com", tokenId: resolved });
+    if (snap.ok) {
+      seq += 1;
+      engine.ingestMarket(nowMs(), { type: "book", seq, bids: snap.bids, asks: snap.asks });
+      bootstrap.ok = true;
+      bootstrap.source = "rest_snapshot";
+      bootstrap.bids = snap.bids.length;
+      bootstrap.asks = snap.asks.length;
+      bootstrap.url = snap.url;
+      wsStats.bookEventCount += 1;
+      wsStats.lastBookAtMs = nowMs();
+    } else {
+      bootstrap.ok = false;
+      bootstrap.source = "rest_snapshot_failed";
+      bootstrap.status = snap.status ?? null;
+    }
+  } catch {
+    bootstrap.ok = false;
+    bootstrap.source = "rest_snapshot_failed";
+  }
 
   const handleMarketMessage = (text) => {
     wsStats.lastMessageSample = String(text ?? "").slice(0, 600);
@@ -666,6 +739,22 @@ async function runLiveMode(opts) {
         wsStats.lastBookAtMs = t;
         engine.ingestMarket(t, { type: "book", seq, bids: ev.bids, asks: ev.asks });
       } else if (ev.kind === "delta") {
+        if (engine.ob.needsResync) {
+          const seed = parseBestBidAskFromDeltaEvent(ev);
+          if (seed) {
+            seq += 1;
+            wsStats.bookEventCount += 1;
+            wsStats.syntheticBookFromDeltaCount += 1;
+            wsStats.lastBookAtMs = t;
+            engine.ingestMarket(t, { type: "book", seq, bids: seed.bids, asks: seed.asks });
+            if (!bootstrap.ok) {
+              bootstrap.ok = true;
+              bootstrap.source = "delta_best_bid_ask";
+              bootstrap.bids = seed.bids.length;
+              bootstrap.asks = seed.asks.length;
+            }
+          }
+        }
         wsStats.deltaEventCount += 1;
         wsStats.lastDeltaAtMs = t;
         engine.ingestMarket(t, { type: "price_change", seq, side: ev.side, price: ev.price, size: ev.size });
@@ -769,6 +858,7 @@ async function runLiveMode(opts) {
     await atomicWriteJson(opts.outPath, {
       mode: "live",
       meta: { wsUrl: opts.wsUrl, assetId: resolved, market: opts.market, startedAt: new Date(t0).toISOString() },
+      bootstrap,
       ws: { ...wsStats, readyState: ws ? ws.readyState : null },
       snapshot: engine.snapshot({ i: snapI, nowMs: t, lastCycle }),
       state: engine.stateFinal()
@@ -814,7 +904,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err?.stack || String(err));
-  process.exit(1);
-});
+const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error(err?.stack || String(err));
+    process.exit(1);
+  });
+}
