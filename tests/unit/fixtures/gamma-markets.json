@@ -4,6 +4,8 @@
   "markets": [
     {
       "id": "mkt_alpha",
+      "slug": "alpha-vs-bravo",
+      "clobTokenIds": "[\"alpha_yes\", \"alpha_no\"]",
       "question": "Will alpha happen?",
       "active": true,
       "closed": false,
@@ -14,6 +16,11 @@
     },
     {
       "id": "mkt_bravo",
+      "slug": "bravo-vs-charlie",
+      "clobTokenIds": [
+        "bravo_yes",
+        "bravo_no"
+      ],
       "question": "Will bravo happen?",
       "active": true,
       "closed": false,
@@ -24,6 +31,8 @@
     },
     {
       "id": "mkt_charlie",
+      "slug": "charlie-vs-delta",
+      "clobTokenIds": "charlie_yes",
       "question": "Will charlie happen?",
       "active": true,
       "closed": false,
@@ -34,6 +43,8 @@
     },
     {
       "id": "mkt_inactive",
+      "slug": "inactive-market",
+      "clobTokenIds": "[\"inactive_yes\", \"inactive_no\"]",
       "question": "An inactive market (should rank last)",
       "active": false,
       "closed": false,
@@ -44,4 +55,3 @@
     }
   ]
 }
-

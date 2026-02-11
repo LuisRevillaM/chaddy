@@ -9,6 +9,7 @@ import { createGeoChecker } from "../packages/executor/src/geoblockClient.js";
 import { preflightLiveMode } from "../packages/executor/src/preflight.js";
 import { ClobClient } from "../packages/executor/src/polymarket/ClobClient.js";
 import { PolymarketRestExecutor } from "../packages/executor/src/polymarket/PolymarketRestExecutor.js";
+import { ScoringClient } from "../packages/executor/src/polymarket/ScoringClient.js";
 import { parsePolymarketMarketChannelLine } from "../packages/mm-core/src/polymarket/parseMarketChannelLine.js";
 import { parsePolymarketUserChannelLine } from "../packages/mm-core/src/polymarket/parseUserChannelLine.js";
 import { killSwitchDecision } from "../packages/mm-core/src/controls/killSwitch.js";
@@ -21,12 +22,14 @@ import { OrderTracker } from "../packages/mm-core/src/state/orderTracker.js";
 import { PositionTracker } from "../packages/mm-core/src/state/positionTracker.js";
 import { validateConfig } from "../packages/shared/src/validateConfig.js";
 import { RUN_JOURNAL_SCHEMA_VERSION, makeRunJournalMeta } from "../packages/shared/src/runJournalSchema.js";
+import { buildLiveJournalScoring } from "./lib/liveScoringJournal.js";
 
 function parseArgs(argv) {
   const out = {
     configPath: null,
     outPath: path.join(process.cwd(), "artifacts", "live", "latest.json"),
     journalPath: null,
+    liveScoringEnabled: false,
     snapshotEveryMs: 1_000,
     cycleEveryMs: 1_000,
     wsMarketUrl: "wss://ws-subscriptions-clob.polymarket.com/ws/market",
@@ -47,6 +50,10 @@ function parseArgs(argv) {
     }
     if (a === "--journal") {
       out.journalPath = path.resolve(process.cwd(), String(argv[++i] ?? ""));
+      continue;
+    }
+    if (a === "--live-scoring-enabled") {
+      out.liveScoringEnabled = true;
       continue;
     }
     if (a === "--snapshot-every-ms") {
@@ -289,6 +296,10 @@ class LiveEngine {
     };
   }
 
+  liveOrders() {
+    return this.orderTracker.liveOrders();
+  }
+
   #updateMidpointRef() {
     const bb = this.ob.bestBid();
     const ba = this.ob.bestAsk();
@@ -339,6 +350,10 @@ async function main() {
   }
 
   const client = new ClobClient({ fetchImpl: fetch, baseUrl: opts.clobBaseUrl, authHeaders });
+  const liveScoringEnabled =
+    (opts.liveScoringEnabled || process.env.LIVE_SCORING_ENABLED === "1") &&
+    process.env.PROVE_NO_NETWORK !== "1";
+  const scoringClient = liveScoringEnabled ? new ScoringClient({ fetchImpl: fetch, baseUrl: opts.clobBaseUrl, authHeaders }) : null;
 
   // Track up to 3 markets.
   const markets = cfg.markets.slice(0, 3);
@@ -603,14 +618,22 @@ async function main() {
           ops.canceled = Number(r.canceled || 0);
           ops.cancelOk = Number(r.ok ? r.canceled || 0 : 0);
         }
-        await appendJsonl(opts.journalPath, {
+        const scoring = await buildLiveJournalScoring({
+          enabled: liveScoringEnabled,
+          scoringClient,
+          liveOrders: engines.get(it.market).liveOrders()
+        });
+
+        const entry = {
           v: RUN_JOURNAL_SCHEMA_VERSION,
           t,
           kind: "cycle",
           market: it.market,
           i: cycleI,
           ops
-        });
+        };
+        if (scoring) entry.scoring = scoring;
+        await appendJsonl(opts.journalPath, entry);
       }
       cycleI += 1;
     }
@@ -626,6 +649,7 @@ async function main() {
       heartbeat: { i: snapI, nowMs: t, uptimeMs: t },
       bootstrap,
       preflight: pre,
+      scoring: { enabled: liveScoringEnabled },
       ws: { market: { ...wsMarketStats, readyState: wsMarket ? wsMarket.readyState : null }, user: { ...wsUserStats, readyState: wsUser ? wsUser.readyState : null } },
       cycleLast,
       perMarket
