@@ -1,0 +1,117 @@
+{
+  "version": 11,
+  "goals": [
+    {
+      "id": "G26",
+      "milestone": "OPS",
+      "title": "Operator Doctor (Selfcheck + Geoblock + Opt-In Integration) + Single Report",
+      "objective": "Make it easy for a non-technical operator to run a single clickable script that: (1) validates the environment, (2) checks Polymarket geoblock status without bypassing, (3) optionally runs the opt-in integration suite, and (4) writes a single JSON report + small debug bundle for remote review.",
+      "constraints": [
+        "Do not bypass or weaken Polymarket geographic restrictions. If blocked, the doctor must report it clearly and must not attempt trading.",
+        "Offline proof suites must remain offline by default. When PROVE_NO_NETWORK=1, doctor must not make network calls.",
+        "Never write secrets or raw IP addresses into artifacts or logs; security scan must pass."
+      ],
+      "deliverables": [
+        "Add operator/doctor.command that writes artifacts/operator/doctor.json and optionally artifacts/operator/doctor-bundle.tgz.",
+        "Doctor must run: operator/selfcheck.command, a geoblock check (redacting ip), and (only if INTEGRATION_ENABLED=1) npm run integration.",
+        "Add tests/sim/operatorDoctor.test.mjs that runs doctor in offline mode and writes artifacts/proofs/latest/suite/sim/operator-doctor.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/operator-doctor.json"
+        ]
+      }
+    },
+    {
+      "id": "G27",
+      "milestone": "CFG",
+      "title": "Gamma Resolver CLI (Slug -> clobTokenIds) + Config Patch (Fixture-Proven)",
+      "objective": "Add a robust Gamma market resolver that can take a gamma slug and deterministically resolve clobTokenIds, including handling the common Gamma quirk where clobTokenIds is a JSON-encoded string. This reduces operator error when configuring live markets.",
+      "constraints": [
+        "Offline proof suites must remain offline by default: add a fixture mode that does not fetch.",
+        "Never log secrets or PII; security scan must pass."
+      ],
+      "deliverables": [
+        "Add packages/shared/src/gamma.js exporting parseGammaClobTokenIds(raw) -> string[].",
+        "Add scripts/resolve-gamma.mjs supporting: --mode fixture|live, --gamma-slug, --token-index, --fixture <path>, --out <path>.",
+        "Add tests/unit/resolveGammaCli.test.mjs that runs fixture mode against tests/unit/fixtures/gamma-markets.json and writes artifacts/proofs/latest/suite/unit/gamma-resolve.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/unit/gamma-resolve.json"
+        ]
+      }
+    },
+    {
+      "id": "G28",
+      "milestone": "SCORE",
+      "title": "Real Rewards Scoring Client (Fetch-Injectable) + Live Runner Journal Wiring (Disabled By Default)",
+      "objective": "Implement a real Polymarket order-scoring client (fetch-injectable for offline proofs) and wire it into the live runner so it can periodically record scoring status for the best live order on each side into the run journal. This makes rewards earn-rate observable during tiny-live runs.",
+      "constraints": [
+        "Offline proof suites must remain offline by default: all scoring calls must be opt-in (e.g. config flag or env) and never execute in unit/sim/replay suites.",
+        "Never write secrets, raw IP addresses, or auth headers into artifacts/logs; security scan must pass."
+      ],
+      "deliverables": [
+        "Add packages/executor/src/polymarket/ScoringClient.js exporting a fetch-injectable client with checkOrderScoring(orderId) -> { ok:boolean, scoring:boolean|null, reason:string|null }.",
+        "Add tests/unit/scoringClient.test.mjs proving request formation + stable redacted errors.",
+        "Update scripts/run-live.mjs to accept an opt-in flag/env (e.g. LIVE_SCORING_ENABLED=1) to call scoring checks and append scoring results into the run journal entries (runJournalSchema already supports scoring).",
+        "Add tests/unit/runLiveJournalScoring.test.mjs that exercises the journaling helper(s) in isolation (no network) and writes artifacts/proofs/latest/suite/unit/live-scoring-journal.json.",
+        "Add tests/integration/scoring.test.mjs skeleton (skipped unless INTEGRATION_ENABLED=1 and POLY_ORDER_ID is set) that writes artifacts/proofs/latest/suite/integration/scoring.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite unit,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/unit/live-scoring-journal.json"
+        ]
+      }
+    },
+    {
+      "id": "G29",
+      "milestone": "INV",
+      "title": "Inventory Signals (No On-Chain Ops Yet) + Sim Artifact",
+      "objective": "Add deterministic inventory signals so the bot can tell the operator when it is inventory-constrained (cannot quote asks without YES tokens, etc.). This is not on-chain automation; it makes inventory needs explicit and observable.",
+      "constraints": [
+        "No on-chain calls in offline proof suites; this is signals-only.",
+        "Deterministic and bounded memory; security scan must pass."
+      ],
+      "deliverables": [
+        "Add packages/mm-core/src/state/inventorySignals.js exporting computeInventorySignals({ position, target }) -> { ok:boolean, needsBuy:boolean, needsSell:boolean, note:string }.",
+        "Wire inventory signals into one sim proof trace/status snapshot and write artifacts/proofs/latest/suite/sim/inventory-signals.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/inventory-signals.json"
+        ]
+      }
+    },
+    {
+      "id": "G30",
+      "milestone": "REL",
+      "title": "Build Operator Bundle (Folder + Manifest) + Proof",
+      "objective": "Add a deterministic build step that assembles an operator bundle folder (scripts + config templates + runbook snippets) and writes a manifest JSON. This reduces human error when handing the project to non-technical operators.",
+      "constraints": [
+        "Must run offline; must not include secrets; security scan must pass.",
+        "Bundle contents must be deterministic (stable filenames; no timestamps in manifest)."
+      ],
+      "deliverables": [
+        "Add scripts/build-operator-bundle.mjs that writes artifacts/operator-bundle/latest/ and artifacts/operator-bundle/latest/manifest.json.",
+        "Add tests/sim/buildOperatorBundle.test.mjs that runs the build script and writes artifacts/proofs/latest/suite/sim/operator-bundle-manifest.json."
+      ],
+      "proof": {
+        "command": "npm run prove -- --suite sim,security",
+        "required_artifacts": [
+          "artifacts/proofs/latest/report.md",
+          "artifacts/proofs/latest/suite/sim/operator-bundle-manifest.json"
+        ]
+      }
+    }
+  ]
+}
+
