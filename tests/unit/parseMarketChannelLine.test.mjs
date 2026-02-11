@@ -46,3 +46,21 @@ test("unit: market channel parser treats best_bid_ask as a top-of-book snapshot"
   assert.deepEqual(parsed.events[0].bids, [[0.12, 1]]);
   assert.deepEqual(parsed.events[0].asks, [[0.14, 1]]);
 });
+
+test("unit: market channel parser accepts array envelope payloads", () => {
+  const line = JSON.stringify([
+    {
+      market: "mkt",
+      asset_id: "asset",
+      bids: [{ price: "0.2", size: "3" }],
+      asks: [{ price: "0.21", size: "4" }]
+    }
+  ]);
+
+  const parsed = parsePolymarketMarketChannelLine(line);
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.events.length, 1);
+  assert.equal(parsed.events[0].kind, "snapshot");
+  assert.deepEqual(parsed.events[0].bids, [[0.2, 3]]);
+  assert.deepEqual(parsed.events[0].asks, [[0.21, 4]]);
+});

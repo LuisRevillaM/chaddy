@@ -36,6 +36,45 @@ export function parsePolymarketMarketChannelLine(line) {
     return { ok: false, error: { code: "invalid_json", message: "Invalid JSON", details: { error: String(e?.message || e) } } };
   }
 
+  if (Array.isArray(obj)) {
+    /** @type {InternalMarketEvent[]} */
+    const events = [];
+    for (let i = 0; i < obj.length; i++) {
+      const parsed = parseSingleMarketPayload(obj[i]);
+      if (!parsed.ok) {
+        return {
+          ok: false,
+          error: {
+            code: parsed.error.code,
+            message: parsed.error.message,
+            details: { ...(parsed.error.details || {}), envelope: "array", index: i }
+          }
+        };
+      }
+      events.push(...parsed.events);
+    }
+    return { ok: true, events };
+  }
+
+  return parseSingleMarketPayload(obj);
+}
+
+/**
+ * @param {unknown} obj
+ * @returns {{ ok: true, events: InternalMarketEvent[] } | { ok: false, error: { code: string, message: string, details?: Record<string, unknown> } }}
+ */
+function parseSingleMarketPayload(obj) {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    return {
+      ok: false,
+      error: {
+        code: "invalid_shape",
+        message: "market payload must be a JSON object",
+        details: { type: Array.isArray(obj) ? "array" : typeof obj }
+      }
+    };
+  }
+
   const eventType = obj?.event_type ?? obj?.type ?? null;
 
   // Snapshot messages are identified by the presence of bids[] and asks[], regardless of event_type.
@@ -58,19 +97,6 @@ export function parsePolymarketMarketChannelLine(line) {
         }
       };
     }
-    const parseLevels = (levels) => {
-      /** @type {Array<[number, number]>} */
-      const out = [];
-      for (const lvl of levels) {
-        const p = Array.isArray(lvl) ? Number(lvl[0]) : Number(lvl?.price);
-        const s = Array.isArray(lvl) ? Number(lvl[1]) : Number(lvl?.size);
-        if (!Number.isFinite(p) || !Number.isFinite(s)) continue;
-        if (s <= 0) continue;
-        out.push([p, s]);
-      }
-      return out;
-    };
-
     return {
       ok: true,
       events: [
@@ -184,4 +210,21 @@ export function parsePolymarketMarketChannelLine(line) {
       details: { event_type: eventType, have: Object.keys(obj || {}) }
     }
   };
+}
+
+/**
+ * @param {unknown[]} levels
+ * @returns {Array<[number, number]>}
+ */
+function parseLevels(levels) {
+  /** @type {Array<[number, number]>} */
+  const out = [];
+  for (const lvl of levels) {
+    const p = Array.isArray(lvl) ? Number(lvl[0]) : Number(lvl?.price);
+    const s = Array.isArray(lvl) ? Number(lvl[1]) : Number(lvl?.size);
+    if (!Number.isFinite(p) || !Number.isFinite(s)) continue;
+    if (s <= 0) continue;
+    out.push([p, s]);
+  }
+  return out;
 }
