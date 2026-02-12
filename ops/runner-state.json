@@ -1,12 +1,12 @@
 {
-  "status": "running",
-  "milestone": "NR7",
-  "phase": "verify",
-  "attempt": 11,
-  "last_heartbeat_at": "2026-02-12T18:49:52Z",
-  "lease_expires_at": "2026-02-12T19:19:52Z",
+  "status": "done",
+  "milestone": "NR8",
+  "phase": "report",
+  "attempt": 12,
+  "last_heartbeat_at": "2026-02-12T19:10:22.666Z",
+  "lease_expires_at": null,
   "lease_repaired": true,
-  "last_commit": "b4ada98",
+  "last_commit": "53c870c",
   "last_error": null,
-  "note": "NR7 verify in progress."
+  "note": "NR8 complete: kill-switch verification passed; artifacts at artifacts/milestones/NR8/20260212T190958Z."
 }
