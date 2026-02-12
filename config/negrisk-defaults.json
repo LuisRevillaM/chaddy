@@ -1,0 +1,20 @@
+{
+  "strategy": "negrisk",
+  "dryRun": true,
+  "risk": {
+    "maxNotionalPerEvent": 250,
+    "maxTotalOpenNotional": 500,
+    "maxSingleOrderSize": 50,
+    "maxDailyTradedNotional": 1500,
+    "minEdgePerShare": 0.02,
+    "maxConcurrentEvents": 2,
+    "relayerFailStreakPause": 3,
+    "websocketStaleSeconds": 20
+  },
+  "canonicalOrdering": {
+    "excludeNegRiskOther": true,
+    "primarySortKey": "market.slug",
+    "fallbackSortKey": "conditionId",
+    "requireHashMatchBeforeConvert": true
+  }
+}

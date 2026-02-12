@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "project": "bot",
+  "strategy": "negrisk",
+  "approvalGate": "AUTOPILOT_APPROVED:true",
+  "milestones": [
+    {"id":"NR0","verify":["npm run prove","node scripts/list-goals.mjs"],"artifacts":["artifacts/milestones/NR0"],"requiresCodeChange":true},
+    {"id":"NR1","verify":["npm run goal -- --pack docs/agent-goals/goalpack-v11.json G27","npm test -- tests/unit/*negRisk*.test.mjs"],"artifacts":["artifacts/negrisk/universe/latest.json"],"requiresCodeChange":true},
+    {"id":"NR2","verify":["npm test -- tests/unit/*indexset*.test.mjs","node scripts/prove.mjs --suite=nr2"],"artifacts":["artifacts/negrisk"],"requiresCodeChange":true},
+    {"id":"NR3","verify":["npm test -- tests/replay/*orderbook*.test.mjs","node scripts/prove.mjs --suite=nr3"],"artifacts":["artifacts/milestones/NR3"],"requiresCodeChange":true},
+    {"id":"NR4","verify":["npm test -- tests/unit/*opportunity*.test.mjs","node scripts/run-paper-live.mjs --mode fixture --strategy negrisk"],"artifacts":["artifacts/milestones/NR4"],"requiresCodeChange":true},
+    {"id":"NR5","verify":["npm test -- tests/integration/*executor*.test.mjs","node scripts/prove.mjs --suite=nr5"],"artifacts":["artifacts/milestones/NR5"],"requiresCodeChange":true},
+    {"id":"NR6","verify":["npm test -- tests/integration/*convert*.test.mjs","node scripts/prove.mjs --suite=nr6"],"artifacts":["artifacts/milestones/NR6"],"requiresCodeChange":true},
+    {"id":"NR7","verify":["npm test -- tests/integration/*inventory*.test.mjs","node scripts/prove.mjs --suite=nr7"],"artifacts":["artifacts/milestones/NR7"],"requiresCodeChange":true},
+    {"id":"NR8","verify":["npm test -- tests/integration/*killSwitch*.test.mjs","node scripts/prove.mjs --suite=nr8"],"artifacts":["artifacts/milestones/NR8"],"requiresCodeChange":true},
+    {"id":"NR9","verify":["node scripts/run-live.mjs --strategy negrisk --tiny","node scripts/analyze-run.mjs"],"artifacts":["artifacts/milestones/NR9"],"requiresCodeChange":false},
+    {"id":"NR10","verify":["npm run prove","node scripts/run-operator-doctor.mjs"],"artifacts":["artifacts/milestones/NR10"],"requiresCodeChange":false}
+  ]
+}

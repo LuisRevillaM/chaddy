@@ -9,6 +9,7 @@
     "prove": "node scripts/prove.mjs",
     "goal": "node scripts/run-goal.mjs",
     "goals": "node scripts/list-goals.mjs",
+    "negrisk:preflight": "node scripts/validate-negrisk-contracts.mjs",
     "test": "node --test",
     "unit": "node scripts/prove.mjs --suite unit",
     "replay": "node scripts/prove.mjs --suite replay",

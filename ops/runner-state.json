@@ -1,0 +1,1 @@
+{"status":"running","milestone":"NR1","phase":"preflight","attempt":2,"last_heartbeat_at":"2026-02-12T10:29:30.517Z","lease_expires_at":null,"last_commit":null,"last_error":null,"note":"Starting bounded chunk: preflight + attempt commit for NR1 artifacts/code."}
