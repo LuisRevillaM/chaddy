@@ -27,6 +27,9 @@ import { buildLiveJournalScoring } from "./lib/liveScoringJournal.js";
 function parseArgs(argv) {
   const out = {
     configPath: null,
+    strategy: null,
+    tiny: false,
+    maxRuntimeMs: null,
     outPath: path.join(process.cwd(), "artifacts", "live", "latest.json"),
     journalPath: null,
     liveScoringEnabled: false,
@@ -42,6 +45,18 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === "--config") {
       out.configPath = path.resolve(process.cwd(), String(argv[++i] ?? ""));
+      continue;
+    }
+    if (a === "--strategy") {
+      out.strategy = String(argv[++i] ?? "").toLowerCase();
+      continue;
+    }
+    if (a === "--tiny") {
+      out.tiny = true;
+      continue;
+    }
+    if (a === "--max-runtime-ms") {
+      out.maxRuntimeMs = Number(argv[++i] ?? NaN);
       continue;
     }
     if (a === "--out") {
@@ -309,8 +324,19 @@ class LiveEngine {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+
+  if (!opts.configPath && opts.strategy === "negrisk" && opts.tiny) {
+    opts.configPath = path.resolve(process.cwd(), "config/live.json");
+  }
+  if (!opts.journalPath && opts.tiny) {
+    opts.journalPath = path.resolve(process.cwd(), "artifacts/live/run.journal.jsonl");
+  }
+  if (!Number.isFinite(opts.maxRuntimeMs) && opts.tiny) {
+    opts.maxRuntimeMs = 30_000;
+  }
+
   if (!opts.configPath) {
-    console.error("Usage: node scripts/run-live.mjs --config <path> [--out <path>]");
+    console.error("Usage: node scripts/run-live.mjs --config <path> [--out <path>] [--journal <path>] [--strategy negrisk --tiny]");
     process.exit(2);
   }
 
@@ -680,6 +706,10 @@ async function main() {
 
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
+
+  if (Number.isFinite(opts.maxRuntimeMs) && opts.maxRuntimeMs > 0) {
+    setTimeout(shutdown, opts.maxRuntimeMs);
+  }
 
   // eslint-disable-next-line no-constant-condition
   while (true) {

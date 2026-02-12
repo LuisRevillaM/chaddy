@@ -59,3 +59,5 @@ This code exists, but "works on real Polymarket" is still **unproven** until int
 ## Supervisor Incidents
 
 - 2026-02-12T12:59:00Z (UTC): Runner lease missing/expired (`lease_expires_at=null`) while heartbeat remained fresh; supervisor marked runner state as `stalled` and incremented attempt to 4.
+- 2026-02-12T19:39:00Z (UTC): Runner heartbeat remained fresh (`last_heartbeat_at=2026-02-12T19:31:59Z`) with missing lease; supervisor repaired lease to `2026-02-12T20:09:00Z` per policy and escalated NR9 to `review_required` after repeated verify gate failures.
+- 2026-02-12T21:39:00Z (UTC): Runner heartbeat remained fresh (`last_heartbeat_at=2026-02-12T21:30:03Z`) with missing lease; supervisor repaired lease to `2026-02-12T22:09:00Z` per policy. State remains `stalled` on NR9 (`review_required`) pending operator-machine tiny-live proof.

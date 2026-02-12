@@ -19,6 +19,13 @@ function parseArgs(argv) {
       out.outPath = path.resolve(process.cwd(), String(argv[++i] ?? ""));
       continue;
     }
+    if (!a.startsWith("-") && !out.journalPath) {
+      out.journalPath = path.resolve(process.cwd(), a);
+      continue;
+    }
+  }
+  if (!out.journalPath) {
+    out.journalPath = path.resolve(process.cwd(), "artifacts/live/run.journal.jsonl");
   }
   return out;
 }
