@@ -17,7 +17,7 @@ Deliver a NegRisk conversion/arbitrage strategy using the existing bot infrastru
 - [x] NR2 Canonical mapper + indexSet
 - [x] NR3 Orderbook cache reliability
 - [x] NR4 Opportunity engine (dry run)
-- [ ] NR5 CLOB execution state machine
+- [x] NR5 CLOB execution state machine
 - [ ] NR6 Relayer + adapter conversion
 - [ ] NR7 Inventory + reconciliation
 - [ ] NR8 Risk + circuit breakers
