@@ -18,7 +18,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 **Required outputs:** scanner module, event cache, exclusion of `negRiskOther`.
 **Verify commands:**
 - `npm run goal -- --pack docs/agent-goals/goalpack-v11.json G27`
-- `npm test -- tests/unit/*negRisk*.test.mjs`
+- `npm test -- tests/unit/*negRiskUniverse*.test.mjs`
 **Assertions:**
 - only events with required flags are included
 - each event has `negRiskMarketID`
@@ -29,7 +29,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 **Goal:** deterministic mapping from outcome index to bitmask.
 **Required outputs:** canonical order builder + indexset utilities.
 **Verify commands:**
-- `npm test -- tests/unit/*indexset*.test.mjs`
+- `npm test -- tests/unit/*negriskIndexset*.test.mjs`
 - `node scripts/prove.mjs --suite=nr2`
 **Assertions:**
 - canonical ordering excludes `negRiskOther=true`
@@ -52,7 +52,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 ## NR4 — Opportunity Engine (Dry Run)
 **Goal:** detect profitable NO->convert->YES bundle opportunities.
 **Verify commands:**
-- `npm test -- tests/unit/*opportunity*.test.mjs`
+- `npm test -- tests/unit/*negriskOpportunity*.test.mjs`
 - `node scripts/run-paper-live.mjs --mode fixture --strategy negrisk`
 **Assertions:**
 - fee-aware edge math correct
@@ -63,7 +63,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 ## NR5 — CLOB Execution State Machine
 **Goal:** robust buy/sell order lifecycle with policy checks.
 **Verify commands:**
-- `npm test -- tests/integration/*executor*.test.mjs`
+- `npm test -- tests/integration/*negriskExecutor*.test.mjs`
 - `node scripts/prove.mjs --suite=nr5`
 **Assertions:**
 - state transitions valid (placed->filled/partial/cancelled)
@@ -73,7 +73,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 ## NR6 — Relayer + Adapter Conversion
 **Goal:** submit and track `convertPositions` lifecycle.
 **Verify commands:**
-- `npm test -- tests/integration/*convert*.test.mjs`
+- `npm test -- tests/integration/*negriskConvert*.test.mjs`
 - `node scripts/prove.mjs --suite=nr6`
 **Assertions:**
 - correct `_marketId`, `_indexSet`, `_amount`
@@ -89,7 +89,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 ## NR7 — Inventory + Reconciliation
 **Goal:** persistent inventory with pending buckets and restart safety.
 **Verify commands:**
-- `npm test -- tests/integration/*inventory*.test.mjs`
+- `npm test -- tests/integration/*negriskInventory*.test.mjs`
 - `node scripts/prove.mjs --suite=nr7`
 **Assertions:**
 - restart rebuilds accurate positions and pending conversions
@@ -99,7 +99,7 @@ Each milestone includes: Goal, Required Outputs, Verify Commands, Assertions, Ev
 ## NR8 — Risk + Circuit Breakers
 **Goal:** prevent blowups during volatile/failed conditions.
 **Verify commands:**
-- `npm test -- tests/integration/*killSwitch*.test.mjs`
+- `npm test -- tests/integration/*negriskKillSwitch*.test.mjs`
 - `node scripts/prove.mjs --suite=nr8`
 **Assertions:**
 - max per-event notional <= $250 enforced

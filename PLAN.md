@@ -14,7 +14,7 @@ Deliver a NegRisk conversion/arbitrage strategy using the existing bot infrastru
 ## Milestones
 - [ ] NR0 Bootstrap + strategy flag
 - [x] NR1 NegRisk universe scanner
-- [ ] NR2 Canonical mapper + indexSet
+- [x] NR2 Canonical mapper + indexSet
 - [ ] NR3 Orderbook cache reliability
 - [ ] NR4 Opportunity engine (dry run)
 - [ ] NR5 CLOB execution state machine

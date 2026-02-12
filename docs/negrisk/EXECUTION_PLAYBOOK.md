@@ -41,7 +41,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 - Implement Gamma event filter + market extraction.
 - Verify:
   - `npm run goal -- --pack docs/agent-goals/goalpack-v11.json G27`
-  - `npm test -- tests/unit/*negRisk*.test.mjs`
+  - `npm test -- tests/unit/*negRiskUniverse*.test.mjs`
 - Assert:
   - `negRisk`, `enableOrderBook`, `enableNegRisk` required
   - `negRiskMarketID` captured
@@ -52,7 +52,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR2 Canonical mapper + indexSet
 - Implement canonical ordering + indexSet builder.
 - Verify:
-  - `npm test -- tests/unit/*indexset*.test.mjs`
+  - `npm test -- tests/unit/*negriskIndexset*.test.mjs`
   - `node scripts/prove.mjs --suite=nr2`
 - Assert:
   - canonical id = `conditionId`
@@ -76,7 +76,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR4 Opportunity engine (dry run)
 - Implement fee-aware opportunity and sizing logic.
 - Verify:
-  - `npm test -- tests/unit/*opportunity*.test.mjs`
+  - `npm test -- tests/unit/*negriskOpportunity*.test.mjs`
   - `node scripts/run-paper-live.mjs --mode fixture --strategy negrisk`
 - Assert:
   - edge math correct after fees/slippage buffer
@@ -87,7 +87,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR5 CLOB execution state machine
 - Implement order lifecycle and conversion preconditions.
 - Verify:
-  - `npm test -- tests/integration/*executor*.test.mjs`
+  - `npm test -- tests/integration/*negriskExecutor*.test.mjs`
   - `node scripts/prove.mjs --suite=nr5`
 - Assert:
   - no convert before NO fill
@@ -98,7 +98,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR6 Relayer + adapter conversion
 - Implement conversion tx submit/poll/finalize path.
 - Verify:
-  - `npm test -- tests/integration/*convert*.test.mjs`
+  - `npm test -- tests/integration/*negriskConvert*.test.mjs`
   - `node scripts/prove.mjs --suite=nr6`
 - Assert:
   - tx states handled exactly:
@@ -113,7 +113,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR7 Inventory + reconciliation
 - Implement persistent inventory + pending conversion buckets.
 - Verify:
-  - `npm test -- tests/integration/*inventory*.test.mjs`
+  - `npm test -- tests/integration/*negriskInventory*.test.mjs`
   - `node scripts/prove.mjs --suite=nr7`
 - Assert:
   - restart recovery accurate
@@ -124,7 +124,7 @@ This playbook is the operator/agent checklist for NR0–NR10. Each milestone req
 ### NR8 Risk + circuit breakers
 - Implement hard caps and pause/kill behavior.
 - Verify:
-  - `npm test -- tests/integration/*killSwitch*.test.mjs`
+  - `npm test -- tests/integration/*negriskKillSwitch*.test.mjs`
   - `node scripts/prove.mjs --suite=nr8`
 - Assert:
   - per-event <= $250

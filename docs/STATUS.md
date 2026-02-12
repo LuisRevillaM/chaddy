@@ -55,3 +55,7 @@ This code exists, but "works on real Polymarket" is still **unproven** until int
 - Safe for agent-driven iteration: YES (proof harness is fast and deterministic)
 - Ready to run Paper-Live from a non-blocked location (practice): YES
 - Ready to run Tiny-Live trading on a real operator account: NOT YET (must pass opt-in integration smoke + confirm real auth/signing)
+
+## Supervisor Incidents
+
+- 2026-02-12T12:59:00Z (UTC): Runner lease missing/expired (`lease_expires_at=null`) while heartbeat remained fresh; supervisor marked runner state as `stalled` and incremented attempt to 4.
