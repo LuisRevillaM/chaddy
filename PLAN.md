@@ -19,7 +19,7 @@ Deliver a NegRisk conversion/arbitrage strategy using the existing bot infrastru
 - [x] NR4 Opportunity engine (dry run)
 - [x] NR5 CLOB execution state machine
 - [x] NR6 Relayer + adapter conversion
-- [ ] NR7 Inventory + reconciliation
+- [x] NR7 Inventory + reconciliation
 - [ ] NR8 Risk + circuit breakers
 - [ ] NR9 Tiny live canary
 - [ ] NR10 Production readiness gate

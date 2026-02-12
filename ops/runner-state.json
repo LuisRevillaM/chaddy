@@ -1,12 +1,12 @@
 {
-  "status": "noop_done",
-  "milestone": "NR3",
-  "phase": "report",
-  "attempt": 5,
-  "last_heartbeat_at": "2026-02-12T16:33:30Z",
-  "lease_expires_at": null,
-  "lease_repaired": false,
-  "last_commit": "01ff1fb",
+  "status": "running",
+  "milestone": "NR7",
+  "phase": "verify",
+  "attempt": 11,
+  "last_heartbeat_at": "2026-02-12T18:49:52Z",
+  "lease_expires_at": "2026-02-12T19:19:52Z",
+  "lease_repaired": true,
+  "last_commit": "b4ada98",
   "last_error": null,
-  "note": "Preflight + NR3 verify commands passed; proof artifacts written to artifacts/milestones/NR3/20260212T163300Z/. No commit made because worktree already contains unrelated tracked/untracked changes (needs cleanup/segmentation before landing NR3). Also had to add git safe.directory for this repo to run git commands."
+  "note": "NR7 verify in progress."
 }
