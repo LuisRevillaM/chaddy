@@ -1,7 +1,7 @@
 # PLAN
 AUTOPILOT_APPROVED: true
 PROJECT_KEY: bot
-REPO_PATH: /workspace/projects/bot
+REPO_PATH: /root/agents/workspaces/cto/projects/bot
 
 ## Goal
 Deliver a NegRisk conversion/arbitrage strategy using the existing bot infrastructure, with explicit proof gates per milestone.
@@ -15,7 +15,7 @@ Deliver a NegRisk conversion/arbitrage strategy using the existing bot infrastru
 - [ ] NR0 Bootstrap + strategy flag
 - [x] NR1 NegRisk universe scanner
 - [x] NR2 Canonical mapper + indexSet
-- [ ] NR3 Orderbook cache reliability
+- [x] NR3 Orderbook cache reliability
 - [ ] NR4 Opportunity engine (dry run)
 - [ ] NR5 CLOB execution state machine
 - [ ] NR6 Relayer + adapter conversion
