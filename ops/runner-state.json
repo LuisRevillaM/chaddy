@@ -1,1 +1,1 @@
-{"status":"done","milestone":"NR1","phase":"report","attempt":2,"last_heartbeat_at":"2026-02-12T10:30:04.912Z","lease_expires_at":null,"last_commit":"8c87a3d","last_error":null,"note":"NR1 completed: preflight and verify passed, artifacts bundled, commit created."}
+{"status":"done","milestone":"NR3","phase":"report","attempt":3,"last_heartbeat_at":"2026-02-12T11:30:31Z","lease_expires_at":null,"last_commit":"24d6493","last_error":null,"note":"NR3 verify passed; artifact bundle created; runner-state committed."}
