@@ -9,10 +9,10 @@ SHADOW_PATH="$REPO_ROOT/artifacts/shadow-live/latest.json"
 LIVE_PATH="${LIVE_STATUS_PATH:-"$REPO_ROOT/artifacts/live/latest.json"}"
 
 STATUS_PATH=""
-if [[ -f "$PAPER_PATH" ]]; then
-  STATUS_PATH="$PAPER_PATH"
-elif [[ -f "$LIVE_PATH" ]]; then
+if [[ -f "$LIVE_PATH" ]]; then
   STATUS_PATH="$LIVE_PATH"
+elif [[ -f "$PAPER_PATH" ]]; then
+  STATUS_PATH="$PAPER_PATH"
 elif [[ -f "$SHADOW_PATH" ]]; then
   STATUS_PATH="$SHADOW_PATH"
 else
