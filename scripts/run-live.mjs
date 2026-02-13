@@ -361,6 +361,11 @@ async function main() {
     process.exit(1);
   }
 
+  // Allow CLI override for official client host without requiring the operator to set env.
+  if (!process.env.POLY_CLOB_HOST && opts.clobBaseUrl) {
+    process.env.POLY_CLOB_HOST = String(opts.clobBaseUrl);
+  }
+
   if (opts.journalPath) {
     // Start a fresh journal for this run.
     await fs.mkdir(path.dirname(opts.journalPath), { recursive: true });
