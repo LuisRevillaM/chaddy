@@ -100,13 +100,42 @@ Rules:
 
 ### Live-Mode Runtime Secrets (Operator Only)
 
-The live runner and integration suite require runtime-only credentials via environment variables:
+Important: Polymarket has *builder keys* and *trading keys*.
 
-- `POLY_CLOB_AUTH_HEADERS_JSON`: JSON object of HTTP auth headers for Polymarket CLOB REST calls.
-  - Example shape (keys are placeholders): `{"x-api-key":"...","x-api-passphrase":"...","x-api-secret":"..."}`
-- `POLY_USER_WS_SUBSCRIBE_JSON` (optional but strongly recommended): JSON payload to subscribe to your user WebSocket channel so the bot can track your orders/fills.
+- Builder keys (from "Builder Profile & Keys") are **not** sufficient to trade on CLOB. They are for builder attribution/relayer flows.
+- CLOB trading requires an L1 signer (private key) to sign orders and to derive L2 API creds.
 
-If these are missing, `scripts/run-live.mjs` will refuse to start (or will be unable to track user state).
+This repo uses Polymarket's official client libraries for live trading, loaded dynamically so offline proofs stay dependency-free.
+
+#### Install Live Dependencies (Operator Machine Only)
+
+From repo root:
+
+```bash
+npm i --no-save @polymarket/clob-client
+```
+
+#### Required Runtime Env (Operator Machine Only)
+
+- `POLY_PRIVATE_KEY`: private key that controls the Polymarket trading wallet (very sensitive)
+- `POLY_FUNDER_ADDRESS`: your Polymarket "profile/proxy" address (the funded account address shown in Polymarket settings)
+- `POLY_SIGNATURE_TYPE`: `0|1|2` (see Polymarket docs; depends on wallet type)
+
+Optional:
+
+- `POLY_CLOB_HOST` (defaults to `https://clob.polymarket.com`)
+
+If these are missing, `scripts/run-live.mjs` and `npm run integration` will refuse to trade.
+
+#### User WebSocket (Strongly Recommended)
+
+For safe live operation you want the user WS enabled so open orders/fills are tracked.
+
+`scripts/run-live.mjs` will attempt to generate the user-channel subscribe payload automatically from derived creds.
+
+If you need to override it (advanced), set:
+
+- `POLY_USER_WS_SUBSCRIBE_JSON`: full JSON payload per Polymarket WSS quickstart.
 
 ## 6) Funding / Live Readiness (Future Step)
 
@@ -158,7 +187,9 @@ INTEGRATION_ENABLED=1 npm run integration
 
 If you want the live smoke to actually place/cancel an order (tiny), you must provide:
 
-- `POLY_CLOB_AUTH_HEADERS_JSON`
+- `POLY_PRIVATE_KEY`
+- `POLY_FUNDER_ADDRESS`
+- `POLY_SIGNATURE_TYPE`
 - `POLY_CLOB_TOKEN_ID` (a real token/asset id)
 - optional: `POLY_CLOB_PRICE`, `POLY_CLOB_SIZE`, `POLY_CLOB_SIDE`
 

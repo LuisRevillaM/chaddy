@@ -7,9 +7,8 @@ import process from "node:process";
 
 import { createGeoChecker } from "../packages/executor/src/geoblockClient.js";
 import { preflightLiveMode } from "../packages/executor/src/preflight.js";
-import { ClobClient } from "../packages/executor/src/polymarket/ClobClient.js";
-import { PolymarketRestExecutor } from "../packages/executor/src/polymarket/PolymarketRestExecutor.js";
-import { ScoringClient } from "../packages/executor/src/polymarket/ScoringClient.js";
+import { createOfficialClobClientFromEnv } from "../packages/executor/src/polymarket/official/createClientFromEnv.js";
+import { PolymarketOfficialExecutor } from "../packages/executor/src/polymarket/PolymarketOfficialExecutor.js";
 import { parsePolymarketMarketChannelLine } from "../packages/mm-core/src/polymarket/parseMarketChannelLine.js";
 import { parsePolymarketUserChannelLine } from "../packages/mm-core/src/polymarket/parseUserChannelLine.js";
 import { killSwitchDecision } from "../packages/mm-core/src/controls/killSwitch.js";
@@ -368,18 +367,47 @@ async function main() {
     await fs.writeFile(opts.journalPath, JSON.stringify(makeRunJournalMeta({ t: 0, runner: "live", markets: cfg.markets.slice(0, 3) })) + "\n", "utf8");
   }
 
-  // Runtime-only auth headers; never persist them.
-  const authHeaders = parseJsonEnv("POLY_CLOB_AUTH_HEADERS_JSON");
-  if (!authHeaders || typeof authHeaders !== "object") {
-    await atomicWriteJson(opts.outPath, { ...statusBase, ok: false, phase: "missing_auth", reasons: ["missing_POLY_CLOB_AUTH_HEADERS_JSON"] });
+  // Official trading client requires L1 signer info; do not persist secrets.
+  // Env requirements are validated and returned as stable error codes.
+  /** @type {any} */
+  let official = null;
+  try {
+    official = await createOfficialClobClientFromEnv();
+  } catch (e) {
+    official = { ok: false, error: String(e?.message || e) };
+  }
+  if (!official || official.ok !== true) {
+    await atomicWriteJson(opts.outPath, {
+      ...statusBase,
+      ok: false,
+      phase: "missing_auth",
+      reasons: [String(official?.error || "missing_official_client")]
+    });
     process.exit(1);
   }
 
-  const client = new ClobClient({ fetchImpl: fetch, baseUrl: opts.clobBaseUrl, authHeaders });
+  // We can generate user-channel subscribe payload from derived creds without persisting it.
+  // If the operator explicitly sets POLY_USER_WS_SUBSCRIBE_JSON, we prefer that.
+  const derivedWsUserPayload =
+    process.env.POLY_USER_WS_SUBSCRIBE_JSON
+      ? null
+      : {
+          type: "user",
+          markets: cfg.markets.slice(0, 3),
+          auth: {
+            apiKey: official.apiCreds?.key ?? official.apiCreds?.apiKey ?? null,
+            secret: official.apiCreds?.secret ?? null,
+            passphrase: official.apiCreds?.passphrase ?? null
+          }
+        };
+  if (derivedWsUserPayload && derivedWsUserPayload.auth.apiKey && derivedWsUserPayload.auth.secret && derivedWsUserPayload.auth.passphrase) {
+    process.env.POLY_USER_WS_SUBSCRIBE_JSON = JSON.stringify(derivedWsUserPayload);
+  }
+
   const liveScoringEnabled =
     (opts.liveScoringEnabled || process.env.LIVE_SCORING_ENABLED === "1") &&
     process.env.PROVE_NO_NETWORK !== "1";
-  const scoringClient = liveScoringEnabled ? new ScoringClient({ fetchImpl: fetch, baseUrl: opts.clobBaseUrl, authHeaders }) : null;
+  const scoringClient = null;
 
   // Track up to 3 markets.
   const markets = cfg.markets.slice(0, 3);
@@ -388,12 +416,14 @@ async function main() {
 
   for (const m of markets) {
     const midpointRef = { value: null };
-    const exec = new PolymarketRestExecutor({
-      client,
+    const exec = new PolymarketOfficialExecutor({
+      client: official.client,
       policy: cfg.executorPolicy,
       marketMidpoint: () => midpointRef.value,
       // Live runner already preflighted. Keep geoAllowed permissive here to avoid requiring GEO_ALLOWED env.
-      geoAllowed: () => true
+      geoAllowed: () => true,
+      tickSize: cfg.quote.tickSize,
+      negRisk: false
     });
 
     engines.set(
